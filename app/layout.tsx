@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Teko } from "next/font/google"; // Use a valid font import
 import "./globals.css";
+import Provider from "./provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const teko = Teko({
   subsets: ["latin"],
 });
 
@@ -25,9 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${teko.className} bg-white dark:bg-black text-black dark:text-white`}
       >
+        <Provider>    
         {children}
+        </Provider>
+        
       </body>
     </html>
   );
