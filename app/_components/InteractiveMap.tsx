@@ -309,7 +309,7 @@ const popularDestinations: Destination[] = [
 
 function InteractiveMap() {
   const [isClient, setIsClient] = useState(false)
-  const [blinkingRedDotIcon, setBlinkingRedDotIcon] = useState(null)
+  const [blinkingRedDotIcon, setBlinkingRedDotIcon] = useState<any>(null)
   
   useEffect(() => {
     setIsClient(true)
