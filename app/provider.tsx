@@ -1,17 +1,13 @@
-import React from 'react'
-import Header from './_components/Header';
+'use client'
 
-function Provider({  children,
+import React from 'react'
+
+function Provider({
+  children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
-  return (
-    <div>
-      <Header/>
-      {children}
-        
-      </div>
-  )
+  return <>{children}</>
 }
 
-export default Provider 
+export default Provider

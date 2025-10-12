@@ -309,7 +309,7 @@ const popularDestinations: Destination[] = [
 
 function InteractiveMap() {
   const [isClient, setIsClient] = useState(false)
-  const [blinkingRedDotIcon, setBlinkingRedDotIcon] = useState<any>(null)
+  const [blinkingRedDotIcon, setBlinkingRedDotIcon] = useState<import('leaflet').DivIcon | null>(null)
   
   useEffect(() => {
     setIsClient(true)
@@ -367,20 +367,19 @@ function InteractiveMap() {
         </div>
       </div>
       
-      {/* Clean Map Container with Classy Outline */}
-      <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-1">
+      {/* Clean Map Container */}
+      <div className="relative rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700">
         <div className="absolute top-4 right-4 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-gray-600 dark:text-gray-300 shadow-sm">
           20 destinations
         </div>
         
-        <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-inner">
-          <div style={{ height: '300px', width: '100%' }}>
-            <MapContainer
-              center={[25, 0]}
-              zoom={2}
-              style={{ height: '100%', width: '100%' }}
-              className="rounded-lg"
-            >
+        <div style={{ height: '300px', width: '100%' }}>
+          <MapContainer
+            center={[25, 0]}
+            zoom={2}
+            style={{ height: '100%', width: '100%' }}
+            className="rounded-xl"
+          >
             {/* Clean, professional map style */}
             <TileLayer
               url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
@@ -422,7 +421,6 @@ function InteractiveMap() {
               </Marker>
             ))}
           </MapContainer>
-        </div>
         </div>
       </div>
     </div>

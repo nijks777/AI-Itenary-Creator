@@ -1,7 +1,7 @@
 import { Textarea } from '@/components/ui/textarea'
 import React from 'react'
 import { MapPin, Camera, Utensils, Compass, Send } from 'lucide-react'
-import InteractiveMap from './InteractiveMap'
+import TravelVideo from './TravelVideo'
 import PopularDestinations from './PopularDestinations'
 
 function Hero() {
@@ -67,8 +67,8 @@ function Hero() {
             </div>
           </div>
 
-          {/* Interactive Map Section */}
-          <InteractiveMap />
+          {/* Travel Video Section */}
+          <TravelVideo />
         </div>
       </div>
 

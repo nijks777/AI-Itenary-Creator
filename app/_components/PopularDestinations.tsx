@@ -31,7 +31,16 @@ function PopularDestinations() {
               
               {/* Card 1 - Paris */}
               <div className="flex-shrink-0 w-60 h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gray-200 dark:bg-gray-700 relative">
-                <div className="absolute bottom-6 left-6 text-gray-800 dark:text-white">
+                <img 
+                  src="/paris.jpg" 
+                  alt="Paris" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-6 left-6 text-white">
                   <h3 className="text-xl font-bold">Paris</h3>
                   <p className="text-sm opacity-90">City of Light</p>
                 </div>
@@ -39,7 +48,16 @@ function PopularDestinations() {
 
               {/* Card 2 - Tokyo */}
               <div className="flex-shrink-0 w-60 h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gray-200 dark:bg-gray-700 relative">
-                <div className="absolute bottom-6 left-6 text-gray-800 dark:text-white">
+                <img 
+                  src="/Tokyo.jpg" 
+                  alt="Tokyo" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-6 left-6 text-white">
                   <h3 className="text-xl font-bold">Tokyo</h3>
                   <p className="text-sm opacity-90">Modern Metropolis</p>
                 </div>
@@ -47,7 +65,16 @@ function PopularDestinations() {
 
               {/* Card 3 - Santorini */}
               <div className="flex-shrink-0 w-60 h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gray-200 dark:bg-gray-700 relative">
-                <div className="absolute bottom-6 left-6 text-gray-800 dark:text-white">
+                <img 
+                  src="/santorini.jpg" 
+                  alt="Santorini" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-6 left-6 text-white">
                   <h3 className="text-xl font-bold">Santorini</h3>
                   <p className="text-sm opacity-90">Greek Paradise</p>
                 </div>
@@ -55,7 +82,16 @@ function PopularDestinations() {
 
               {/* Card 4 - Dubai */}
               <div className="flex-shrink-0 w-60 h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gray-200 dark:bg-gray-700 relative">
-                <div className="absolute bottom-6 left-6 text-gray-800 dark:text-white">
+                <img 
+                  src="/Dubai.jpg" 
+                  alt="Dubai" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-6 left-6 text-white">
                   <h3 className="text-xl font-bold">Dubai</h3>
                   <p className="text-sm opacity-90">Future City</p>
                 </div>
@@ -63,7 +99,16 @@ function PopularDestinations() {
 
               {/* Card 5 - New York */}
               <div className="flex-shrink-0 w-60 h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gray-200 dark:bg-gray-700 relative">
-                <div className="absolute bottom-6 left-6 text-gray-800 dark:text-white">
+                <img 
+                  src="/NewYork.jpg" 
+                  alt="New York" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-6 left-6 text-white">
                   <h3 className="text-xl font-bold">New York</h3>
                   <p className="text-sm opacity-90">Big Apple</p>
                 </div>
@@ -71,7 +116,16 @@ function PopularDestinations() {
 
               {/* Card 6 - Bali */}
               <div className="flex-shrink-0 w-60 h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gray-200 dark:bg-gray-700 relative">
-                <div className="absolute bottom-6 left-6 text-gray-800 dark:text-white">
+                <img 
+                  src="/Bali.jpg" 
+                  alt="Bali" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-6 left-6 text-white">
                   <h3 className="text-xl font-bold">Bali</h3>
                   <p className="text-sm opacity-90">Tropical Paradise</p>
                 </div>
@@ -79,7 +133,16 @@ function PopularDestinations() {
 
               {/* Card 7 - London */}
               <div className="flex-shrink-0 w-60 h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gray-200 dark:bg-gray-700 relative">
-                <div className="absolute bottom-6 left-6 text-gray-800 dark:text-white">
+                <img 
+                  src="/London.jpg" 
+                  alt="London" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-6 left-6 text-white">
                   <h3 className="text-xl font-bold">London</h3>
                   <p className="text-sm opacity-90">Royal Heritage</p>
                 </div>
