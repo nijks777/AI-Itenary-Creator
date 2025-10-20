@@ -1,6 +1,2 @@
-export { DashboardHeader } from './dashboard-header'
-export { StatsCards } from './stats-cards'
-export { QuickActions } from './quick-actions'
-export { RecentActivity } from './recent-activity'
 export { PlanTripForm } from './plan-trip-form'
 export { ItineraryDisplay } from './itinerary-display'
