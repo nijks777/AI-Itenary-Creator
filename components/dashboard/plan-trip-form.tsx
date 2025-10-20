@@ -93,12 +93,12 @@ export function PlanTripForm({ open, onOpenChange }: PlanTripFormProps) {
     <>
       {/* Trip Planning Form Dialog */}
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gray-900">
+            <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
               Plan Your Dream Trip
             </DialogTitle>
-            <DialogDescription className="text-gray-600">
+            <DialogDescription className="text-gray-600 text-base">
               Tell us about your travel plans and we'll create a personalized itinerary for you
             </DialogDescription>
           </DialogHeader>
@@ -231,14 +231,14 @@ export function PlanTripForm({ open, onOpenChange }: PlanTripFormProps) {
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="px-6"
+                className="px-6 hover:bg-gray-100"
                 disabled={isLoading}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="px-6 bg-blue-600 hover:bg-blue-700 text-white"
+                className="px-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold"
                 disabled={isLoading}
               >
                 {isLoading ? (

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Teko } from "next/font/google"; // Use a valid font import
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Provider from "./provider";
 
 
-const teko = Teko({
+const inter = Inter({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -19,14 +21,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${teko.className} bg-white dark:bg-black text-black dark:text-white`}
+        className={`${inter.className} bg-white dark:bg-black text-black dark:text-white`}
       >
-        <Provider>    
+        <Provider>
         {children}
         </Provider>
-        
+
       </body>
     </html>
   );

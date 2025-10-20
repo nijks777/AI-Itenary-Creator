@@ -1,41 +1,78 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
 
 export async function POST(req: NextRequest) {
   try {
-    // Initialize OpenAI client inside the function to avoid build-time errors
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     })
 
     const body = await req.json()
-    const { destination, budget, days, numberOfPeople, averageAge, tripDescription } = body
+    const {
+      startingPoint,
+      destination,
+      budget,
+      days,
+      startDate,
+      endDate,
+      numberOfPeople,
+      groupType,
+      tripType,
+      accommodation,
+      transportation,
+      prePlannedActivities,
+      tripDescription
+    } = body
 
-    // Validate required fields
-    if (!destination || !budget || !days || !numberOfPeople || !averageAge || !tripDescription) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
+    // Only destination is required
+    if (!destination || !destination.trim()) {
+      return new Response(
+        JSON.stringify({ error: 'Destination is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
     }
+
+    // Set defaults for optional fields
+    const budgetValue = budget || '1000'
+    const daysValue = days || '3'
+    const peopleValue = numberOfPeople || '2'
+    const descriptionValue = tripDescription || 'A relaxing and enjoyable trip'
+
+    // Build additional context
+    let additionalContext = ''
+    if (startingPoint) additionalContext += `\nStarting Point: ${startingPoint}`
+    if (startDate && endDate) additionalContext += `\nTravel Dates: ${startDate} to ${endDate}`
+    if (groupType) additionalContext += `\nGroup Type: ${groupType}`
+    if (tripType && tripType.length > 0) additionalContext += `\nTrip Interests: ${tripType.join(', ')}`
+    if (accommodation) additionalContext += `\nPreferred Accommodation: ${accommodation}`
+    if (transportation) additionalContext += `\nPreferred Transportation: ${transportation}`
+    if (prePlannedActivities) additionalContext += `\nPre-planned Activities: ${prePlannedActivities}`
 
     // Create a detailed prompt for OpenAI
     const prompt = `You are an expert travel planner. Create a detailed, day-by-day itinerary for a trip with the following specifications:
 
 Destination: ${destination}
-Budget per person: $${budget}
-Duration: ${days} days
-Number of travelers: ${numberOfPeople}
-Average age of travelers: ${averageAge}
-Trip preferences: ${tripDescription}
+${startingPoint ? `Starting Point: ${startingPoint}` : ''}
+Budget per person: $${budgetValue}
+Duration: ${daysValue} days
+Number of travelers: ${peopleValue}
+${groupType ? `Group Type: ${groupType}` : ''}
+${tripType && tripType.length > 0 ? `Trip Interests: ${tripType.join(', ')}` : ''}
+Trip preferences: ${descriptionValue}${additionalContext}
 
 Please provide a comprehensive itinerary that includes:
 
+${startingPoint ? `IMPORTANT: Since the traveler is coming from ${startingPoint}, include:
+- Flight/train/bus options from ${startingPoint} to ${destination} with estimated costs
+- Best booking platforms and tips
+- Arrival transportation from airport/station to accommodation
+` : ''}
+
 1. A brief overview of the trip
 2. Day-by-day detailed schedule with:
-   - Morning activities (with specific times)
-   - Afternoon activities (with specific times)
-   - Evening activities (with specific times)
+   - Morning activities (with specific times like 9:00 AM, 10:30 AM)
+   - Afternoon activities (with specific times like 1:00 PM, 3:30 PM)
+   - Evening activities (with specific times like 6:00 PM, 8:00 PM)
    - Restaurant recommendations with estimated costs
    - Accommodation suggestions with price ranges
 3. Estimated daily budget breakdown
@@ -55,7 +92,7 @@ Format the response as a JSON object with this structure:
 {
   "title": "Trip title",
   "destination": "${destination}",
-  "duration": "${days} days",
+  "duration": "${daysValue} days",
   "overview": "Brief trip overview",
   "totalBudget": "Estimated total budget",
   "days": [
@@ -114,9 +151,9 @@ Format the response as a JSON object with this structure:
 
 Make sure all Google Maps links are properly formatted and use real locations in ${destination}.`
 
-    // Call OpenAI API with GPT-4
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    // Call OpenAI API with streaming
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -128,34 +165,48 @@ Make sure all Google Maps links are properly formatted and use real locations in
         }
       ],
       temperature: 0.7,
-      max_tokens: 4000,
-      response_format: { type: "json_object" }
+      max_tokens: 10000,
+      response_format: { type: "json_object" },
+      stream: true,
     })
 
-    const itineraryText = completion.choices[0].message.content
+    // Create a readable stream for the response
+    const encoder = new TextEncoder()
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || ''
+            if (content) {
+              controller.enqueue(encoder.encode(content))
+            }
+          }
+          controller.close()
+        } catch (error) {
+          controller.error(error)
+        }
+      },
+    })
 
-    if (!itineraryText) {
-      throw new Error('No response from OpenAI')
-    }
-
-    // Parse the JSON response
-    const itinerary = JSON.parse(itineraryText)
-
-    return NextResponse.json({
-      success: true,
-      itinerary,
-      creditsUsed: 25 // You can adjust this based on your credit system
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
     })
 
   } catch (error: any) {
     console.error('Error generating trip:', error)
 
-    return NextResponse.json(
-      {
+    return new Response(
+      JSON.stringify({
         error: 'Failed to generate trip itinerary',
         details: error.message
-      },
-      { status: 500 }
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
     )
   }
 }

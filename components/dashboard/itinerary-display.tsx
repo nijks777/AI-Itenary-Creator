@@ -271,47 +271,72 @@ export function ItineraryDisplay({ itinerary }: ItineraryDisplayProps) {
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg text-gray-900 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-blue-600" />
-                  Activities
+                  Daily Schedule
                 </h3>
-                <div className="relative border-l-2 border-blue-200 ml-4 pl-8 space-y-6">
-                  {day.activities.map((activity, idx) => (
-                    <div key={idx} className="relative">
-                      <div className="absolute -left-10 top-0 w-6 h-6 bg-blue-600 rounded-full border-4 border-white"></div>
-                      <div className="bg-white rounded-lg border p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <span className="text-sm font-semibold text-blue-600">{activity.time}</span>
-                            <h4 className="font-bold text-gray-900 text-lg">{activity.activity}</h4>
+                <div className="relative border-l-2 border-blue-200 ml-4 pl-8 space-y-8">
+                  {day.activities.map((activity, idx) => {
+                    // Calculate time gap between activities
+                    const showTimeGap = idx > 0
+                    const previousActivity = idx > 0 ? day.activities[idx - 1] : null
+
+                    return (
+                      <div key={idx}>
+                        {/* Show time gap/free time indicator */}
+                        {showTimeGap && previousActivity && (
+                          <div className="relative -mt-4 mb-4">
+                            <div className="absolute -left-10 top-2 w-6 h-6 bg-gray-300 rounded-full border-4 border-white flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg border border-dashed border-gray-300 p-3">
+                              <p className="text-xs text-gray-500 italic">
+                                ⏱️ Free time • Travel between locations or rest
+                              </p>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-gray-900">{activity.estimatedCost}</p>
-                            <p className="text-xs text-gray-500">{activity.duration}</p>
+                        )}
+
+                        {/* Activity */}
+                        <div className="relative">
+                          <div className="absolute -left-10 top-0 w-6 h-6 bg-blue-600 rounded-full border-4 border-white"></div>
+                          <div className="bg-white rounded-lg border p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{activity.time}</span>
+                                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{activity.duration}</span>
+                                </div>
+                                <h4 className="font-bold text-gray-900 text-lg">{activity.activity}</h4>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-semibold text-green-600">{activity.estimatedCost}</p>
+                              </div>
+                            </div>
+                            <p className="text-gray-700 mb-3 leading-relaxed">{activity.description}</p>
+                            <div className="flex items-start gap-2 text-sm text-gray-600 mb-2">
+                              <MapPin className="w-4 h-4 mt-0.5 text-blue-500" />
+                              <span>{activity.location}</span>
+                            </div>
+                            {activity.tips && (
+                              <p className="text-sm text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-100 mt-3">
+                                💡 <span className="font-semibold">Pro Tip:</span> {activity.tips}
+                              </p>
+                            )}
+                            {activity.mapsLink && (
+                              <a
+                                href={activity.mapsLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 mt-3 font-medium"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                                View on Google Maps
+                              </a>
+                            )}
                           </div>
                         </div>
-                        <p className="text-gray-700 mb-3">{activity.description}</p>
-                        <div className="flex items-start gap-2 text-sm text-gray-600 mb-2">
-                          <MapPin className="w-4 h-4 mt-0.5 text-gray-400" />
-                          <span>{activity.location}</span>
-                        </div>
-                        {activity.tips && (
-                          <p className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
-                            💡 {activity.tips}
-                          </p>
-                        )}
-                        {activity.mapsLink && (
-                          <a
-                            href={activity.mapsLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 mt-2"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            Open in Google Maps
-                          </a>
-                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Meals */}
