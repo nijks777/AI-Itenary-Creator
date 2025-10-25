@@ -51,12 +51,17 @@ interface DayPlan {
   dailyBudget: string
 }
 
+interface AccommodationOption extends Accommodation {
+  whyRecommended?: string
+}
+
 interface Itinerary {
   title: string
   destination: string
   duration: string
   overview: string
   totalBudget: string
+  accommodationOptions?: AccommodationOption[]
   days: DayPlan[]
   travelTips: string[]
   packingList: string[]

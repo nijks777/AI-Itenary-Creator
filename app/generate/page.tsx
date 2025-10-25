@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, Check, Sparkles } from 'lucide-react'
 import { tripStorage } from '@/lib/trip-storage'
 
-export default function GeneratePage() {
+function GenerateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [streamingText, setStreamingText] = useState('')
@@ -218,5 +218,20 @@ export default function GeneratePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function GeneratePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <GenerateContent />
+    </Suspense>
   )
 }
