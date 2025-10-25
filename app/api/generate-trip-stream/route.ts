@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
+import { searchRestaurants, searchAttractions, searchAccommodations, formatPlaceForAI } from '@/lib/google-places'
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,6 +39,39 @@ export async function POST(req: NextRequest) {
     const peopleValue = numberOfPeople || '2'
     const descriptionValue = tripDescription || 'A relaxing and enjoyable trip'
 
+    // Fetch real places from Google Places API
+    console.log('Fetching real places from Google Places API...')
+
+    const [restaurants, attractions, accommodations] = await Promise.all([
+      searchRestaurants({
+        destination,
+        tripType: tripType || [],
+        priceLevel: budget,
+        limit: 20
+      }),
+      searchAttractions({
+        destination,
+        tripType: tripType || [],
+        limit: 25
+      }),
+      searchAccommodations(destination, accommodation || 'Hotel', 15)
+    ])
+
+    console.log(`Found ${restaurants.length} restaurants, ${attractions.length} attractions, ${accommodations.length} accommodations`)
+
+    // Format places for AI prompt
+    const restaurantsData = restaurants.length > 0
+      ? restaurants.map(formatPlaceForAI).join(',\n')
+      : 'No restaurant data available - you may suggest general restaurant types'
+
+    const attractionsData = attractions.length > 0
+      ? attractions.map(formatPlaceForAI).join(',\n')
+      : 'No attraction data available - you may suggest general attractions'
+
+    const accommodationsData = accommodations.length > 0
+      ? accommodations.map(formatPlaceForAI).join(',\n')
+      : 'No accommodation data available - you may suggest general accommodation types'
+
     // Build additional context
     let additionalContext = ''
     if (startingPoint) additionalContext += `\nStarting Point: ${startingPoint}`
@@ -60,6 +94,26 @@ ${groupType ? `Group Type: ${groupType}` : ''}
 ${tripType && tripType.length > 0 ? `Trip Interests: ${tripType.join(', ')}` : ''}
 Trip preferences: ${descriptionValue}${additionalContext}
 
+VERIFIED PLACES DATA FROM GOOGLE PLACES API:
+
+RESTAURANTS (use ONLY these verified restaurants):
+[${restaurantsData}]
+
+ATTRACTIONS (use ONLY these verified attractions):
+[${attractionsData}]
+
+ACCOMMODATIONS (use ONLY these verified accommodations):
+[${accommodationsData}]
+
+IMPORTANT INSTRUCTIONS:
+1. You MUST use ONLY the places provided above from Google Places API. These are real, verified places with accurate addresses and ratings.
+2. DO NOT make up or hallucinate any place names, addresses, or details.
+3. Use the exact "name", "address", "rating", and "mapsLink" from the data provided.
+4. DO NOT provide specific times like "9:00 AM" or "2:00 PM" for activities. Instead, suggest a logical order and sequence.
+5. Group activities into logical sections like "Morning", "Afternoon", "Evening" but don't assign specific clock times.
+6. You can suggest "best time to visit" or "recommended duration" but NOT "arrive at 10:30 AM".
+7. Focus on the flow and sequence of activities, not rigid time schedules.
+
 Please provide a comprehensive itinerary that includes:
 
 ${startingPoint ? `IMPORTANT: Since the traveler is coming from ${startingPoint}, include:
@@ -70,23 +124,18 @@ ${startingPoint ? `IMPORTANT: Since the traveler is coming from ${startingPoint}
 
 1. A brief overview of the trip
 2. Day-by-day detailed schedule with:
-   - Morning activities (with specific times like 9:00 AM, 10:30 AM)
-   - Afternoon activities (with specific times like 1:00 PM, 3:30 PM)
-   - Evening activities (with specific times like 6:00 PM, 8:00 PM)
-   - Restaurant recommendations with estimated costs
-   - Accommodation suggestions with price ranges
+   - Activities organized by time of day (Morning/Afternoon/Evening) without specific clock times
+   - Suggested sequence and flow between activities
+   - Restaurant recommendations from the provided list with ratings and costs
+   - Accommodation suggestions from the provided list with ratings and price ranges
 3. Estimated daily budget breakdown
 4. Important travel tips for ${destination}
 5. Suggested packing list
-6. Best times to visit attractions to avoid crowds
+6. Best times to visit attractions to avoid crowds (general guidance, not specific times)
 7. Local transportation options
 8. Must-try local foods and dishes
 9. Cultural etiquette and customs to know
 10. Emergency contacts and important information
-
-For each attraction or restaurant mentioned:
-- Include the full address if available
-- Provide a Google Maps search link in this format: https://www.google.com/maps/search/?api=1&query=[location name and address]
 
 Format the response as a JSON object with this structure:
 {
@@ -101,11 +150,13 @@ Format the response as a JSON object with this structure:
       "title": "Day title",
       "activities": [
         {
-          "time": "9:00 AM",
-          "activity": "Activity name",
+          "timeOfDay": "Morning/Afternoon/Evening",
+          "activity": "Activity name (from verified attractions list)",
           "description": "Detailed description",
-          "location": "Full address",
-          "mapsLink": "Google Maps link",
+          "location": "Full address (from Google data)",
+          "mapsLink": "Google Maps link (from Google data)",
+          "rating": 4.5,
+          "reviews": 1234,
           "estimatedCost": "$XX",
           "duration": "X hours",
           "tips": "Any helpful tips"
@@ -114,19 +165,23 @@ Format the response as a JSON object with this structure:
       "meals": [
         {
           "type": "Breakfast/Lunch/Dinner",
-          "restaurant": "Restaurant name",
+          "restaurant": "Restaurant name (from verified restaurants list)",
           "cuisine": "Type of cuisine",
-          "location": "Full address",
-          "mapsLink": "Google Maps link",
+          "location": "Full address (from Google data)",
+          "mapsLink": "Google Maps link (from Google data)",
+          "rating": 4.5,
+          "reviews": 1234,
           "estimatedCost": "$XX",
           "mustTry": "Recommended dishes"
         }
       ],
       "accommodation": {
-        "name": "Hotel name",
+        "name": "Hotel name (from verified accommodations list)",
         "type": "Hotel/Hostel/Airbnb",
-        "location": "Address",
-        "mapsLink": "Google Maps link",
+        "location": "Address (from Google data)",
+        "mapsLink": "Google Maps link (from Google data)",
+        "rating": 4.5,
+        "reviews": 1234,
         "priceRange": "$XX - $XXX per night",
         "amenities": ["Amenity 1", "Amenity 2"]
       },
@@ -149,7 +204,7 @@ Format the response as a JSON object with this structure:
   }
 }
 
-Make sure all Google Maps links are properly formatted and use real locations in ${destination}.`
+REMEMBER: Use ONLY verified places from the provided lists. Include ratings and review counts. DO NOT use specific clock times, use timeOfDay instead.`
 
     // Call OpenAI API with streaming
     const stream = await openai.chat.completions.create({

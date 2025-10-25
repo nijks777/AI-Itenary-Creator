@@ -1,16 +1,19 @@
 'use client'
 
-import { MapPin, DollarSign, Clock, Utensils, Hotel, ExternalLink, Download } from 'lucide-react'
+import { MapPin, DollarSign, Clock, Utensils, Hotel, ExternalLink, Download, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import jsPDF from 'jspdf'
 
 interface Activity {
-  time: string
+  time?: string  // Legacy support
+  timeOfDay?: "Morning" | "Afternoon" | "Evening"  // New format
   activity: string
   description: string
   location: string
   mapsLink: string
+  rating?: number
+  reviews?: number
   estimatedCost: string
   duration: string
   tips?: string
@@ -22,6 +25,8 @@ interface Meal {
   cuisine: string
   location: string
   mapsLink: string
+  rating?: number
+  reviews?: number
   estimatedCost: string
   mustTry: string
 }
@@ -31,6 +36,8 @@ interface Accommodation {
   type: string
   location: string
   mapsLink: string
+  rating?: number
+  reviews?: number
   priceRange: string
   amenities: string[]
 }
@@ -128,11 +135,13 @@ export function ItineraryDisplay({ itinerary }: ItineraryDisplayProps) {
       day.activities.forEach((activity) => {
         checkPageBreak()
         doc.setFont('helvetica', 'bold')
-        addText(`${activity.time} - ${activity.activity}`, 25, 165)
+        const timeLabel = activity.timeOfDay || activity.time || ''
+        addText(`${timeLabel} - ${activity.activity}`, 25, 165)
         doc.setFont('helvetica', 'normal')
         addText(activity.description, 25, 165)
         addText(`Location: ${activity.location}`, 25, 165)
-        addText(`Cost: ${activity.estimatedCost} | Duration: ${activity.duration}`, 25, 165)
+        const ratingText = activity.rating ? ` | Rating: ${activity.rating}★` : ''
+        addText(`Cost: ${activity.estimatedCost} | Duration: ${activity.duration}${ratingText}`, 25, 165)
         if (activity.tips) {
           addText(`Tip: ${activity.tips}`, 25, 165)
         }
@@ -250,6 +259,79 @@ export function ItineraryDisplay({ itinerary }: ItineraryDisplayProps) {
         </CardContent>
       </Card>
 
+      {/* Accommodation Options - Show at Top */}
+      {itinerary.accommodationOptions && itinerary.accommodationOptions.length > 0 && (
+        <Card className="border-2 border-purple-200 bg-purple-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-2xl">
+              <Hotel className="w-6 h-6 text-purple-600" />
+              Accommodation Options - Choose Your Perfect Stay
+            </CardTitle>
+            <CardDescription>
+              Select one of these top-rated accommodations for your {itinerary.duration} trip
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {itinerary.accommodationOptions.map((accommodation, idx) => (
+                <div key={idx} className="bg-white rounded-lg border-2 border-purple-300 p-4 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="inline-block bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded">
+                          Option {idx + 1}
+                        </span>
+                        {accommodation.rating && (
+                          <div className="flex items-center gap-1 text-xs bg-yellow-50 px-2 py-1 rounded">
+                            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                            <span className="font-semibold text-gray-700">{accommodation.rating}</span>
+                            {accommodation.reviews && (
+                              <span className="text-gray-500">({accommodation.reviews})</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <h4 className="font-bold text-gray-900 text-lg mb-1">{accommodation.name}</h4>
+                      <p className="text-sm text-gray-600">{accommodation.type}</p>
+                    </div>
+                  </div>
+                  <div className="text-sm font-semibold text-purple-600 mb-3">
+                    {accommodation.priceRange}
+                  </div>
+                  <div className="flex items-start gap-2 text-sm text-gray-600 mb-3">
+                    <MapPin className="w-4 h-4 mt-0.5 text-gray-400 flex-shrink-0" />
+                    <span className="line-clamp-2">{accommodation.location}</span>
+                  </div>
+                  {accommodation.whyRecommended && (
+                    <p className="text-xs text-gray-700 bg-purple-50 p-2 rounded mb-3 italic">
+                      "{accommodation.whyRecommended}"
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {accommodation.amenities.slice(0, 4).map((amenity, aIdx) => (
+                      <span key={aIdx} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
+                  {accommodation.mapsLink && (
+                    <a
+                      href={accommodation.mapsLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 font-medium"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      View on Maps
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Day by Day Itinerary */}
       <div className="space-y-6">
         {itinerary.days.map((day) => (
@@ -302,8 +384,19 @@ export function ItineraryDisplay({ itinerary }: ItineraryDisplayProps) {
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{activity.time}</span>
+                                  <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                    {activity.timeOfDay || activity.time}
+                                  </span>
                                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{activity.duration}</span>
+                                  {activity.rating && (
+                                    <div className="flex items-center gap-1 text-xs bg-yellow-50 px-2 py-1 rounded">
+                                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                      <span className="font-semibold text-gray-700">{activity.rating}</span>
+                                      {activity.reviews && (
+                                        <span className="text-gray-500">({activity.reviews})</span>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                                 <h4 className="font-bold text-gray-900 text-lg">{activity.activity}</h4>
                               </div>
@@ -350,8 +443,19 @@ export function ItineraryDisplay({ itinerary }: ItineraryDisplayProps) {
                       {day.meals.map((meal, idx) => (
                         <div key={idx} className="bg-orange-50 rounded-lg border border-orange-200 p-4">
                           <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <span className="text-xs font-semibold text-orange-600 uppercase">{meal.type}</span>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-semibold text-orange-600 uppercase">{meal.type}</span>
+                                {meal.rating && (
+                                  <div className="flex items-center gap-1 text-xs bg-yellow-50 px-2 py-1 rounded">
+                                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                    <span className="font-semibold text-gray-700">{meal.rating}</span>
+                                    {meal.reviews && (
+                                      <span className="text-gray-500">({meal.reviews})</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                               <h4 className="font-bold text-gray-900">{meal.restaurant}</h4>
                               <p className="text-sm text-gray-600">{meal.cuisine}</p>
                             </div>
@@ -390,8 +494,19 @@ export function ItineraryDisplay({ itinerary }: ItineraryDisplayProps) {
                     </h3>
                     <div className="bg-purple-50 rounded-lg border border-purple-200 p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-bold text-gray-900">{day.accommodation.name}</h4>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-gray-900">{day.accommodation.name}</h4>
+                            {day.accommodation.rating && (
+                              <div className="flex items-center gap-1 text-xs bg-yellow-50 px-2 py-1 rounded">
+                                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                <span className="font-semibold text-gray-700">{day.accommodation.rating}</span>
+                                {day.accommodation.reviews && (
+                                  <span className="text-gray-500">({day.accommodation.reviews})</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600">{day.accommodation.type}</p>
                         </div>
                         <span className="font-semibold text-gray-900">{day.accommodation.priceRange}</span>

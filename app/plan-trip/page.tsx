@@ -66,9 +66,9 @@ export default function PlanTripPage() {
       return
     }
 
-    // Encode form data and redirect to generation page
+    // Encode form data and redirect to multi-agent generation page
     const formDataString = encodeURIComponent(JSON.stringify(formData))
-    router.push(`/generate?data=${formDataString}`)
+    router.push(`/generate-multi?data=${formDataString}`)
   }
 
   const goBack = () => {
