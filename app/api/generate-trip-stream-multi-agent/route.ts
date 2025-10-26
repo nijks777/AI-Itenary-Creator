@@ -1,11 +1,114 @@
 import { NextRequest } from 'next/server'
-import { searchRestaurants, searchAttractions, searchAccommodations } from '@/lib/google-places'
+import { searchRestaurants, searchAttractions, searchAccommodations, PlaceResult } from '@/lib/google-places'
 import {
   hotelRecommendationAgent,
   restaurantRecommendationAgent,
   attractionRecommendationAgent,
   masterPlannerAgent
 } from '@/lib/ai-agents'
+
+// Helper function to find place data by name
+function findPlaceByName(name: string, places: PlaceResult[]): PlaceResult | undefined {
+  // First try exact match
+  const exactMatch = places.find(p => p.name.toLowerCase() === name.toLowerCase())
+  if (exactMatch) return exactMatch
+
+  // Then try partial match
+  return places.find(p =>
+    p.name.toLowerCase().includes(name.toLowerCase()) ||
+    name.toLowerCase().includes(p.name.toLowerCase())
+  )
+}
+
+// Enrich itinerary with extended place data
+function enrichItineraryWithPlaceData(
+  itinerary: any,
+  restaurants: PlaceResult[],
+  attractions: PlaceResult[],
+  accommodations: PlaceResult[]
+) {
+  // Enrich accommodation options
+  if (itinerary.accommodationOptions) {
+    itinerary.accommodationOptions = itinerary.accommodationOptions.map((acc: any) => {
+      const placeData = findPlaceByName(acc.name, accommodations)
+      if (placeData) {
+        return {
+          ...acc,
+          website: placeData.website,
+          phone: placeData.formatted_phone_number,
+          photoUrls: placeData.photoUrls,
+          openingHours: placeData.opening_hours?.weekday_text,
+          openNow: placeData.opening_hours?.open_now,
+          placeReviews: placeData.reviews
+        }
+      }
+      return acc
+    })
+  }
+
+  // Enrich each day's data
+  if (itinerary.days) {
+    itinerary.days = itinerary.days.map((day: any) => {
+      // Enrich activities
+      if (day.activities) {
+        day.activities = day.activities.map((activity: any) => {
+          const placeData = findPlaceByName(activity.activity, attractions)
+          if (placeData) {
+            return {
+              ...activity,
+              website: placeData.website,
+              phone: placeData.formatted_phone_number,
+              photoUrls: placeData.photoUrls,
+              openingHours: placeData.opening_hours?.weekday_text,
+              openNow: placeData.opening_hours?.open_now,
+              placeReviews: placeData.reviews
+            }
+          }
+          return activity
+        })
+      }
+
+      // Enrich meals
+      if (day.meals) {
+        day.meals = day.meals.map((meal: any) => {
+          const placeData = findPlaceByName(meal.restaurant, restaurants)
+          if (placeData) {
+            return {
+              ...meal,
+              website: placeData.website,
+              phone: placeData.formatted_phone_number,
+              photoUrls: placeData.photoUrls,
+              openingHours: placeData.opening_hours?.weekday_text,
+              openNow: placeData.opening_hours?.open_now,
+              placeReviews: placeData.reviews
+            }
+          }
+          return meal
+        })
+      }
+
+      // Enrich accommodation
+      if (day.accommodation) {
+        const placeData = findPlaceByName(day.accommodation.name, accommodations)
+        if (placeData) {
+          day.accommodation = {
+            ...day.accommodation,
+            website: placeData.website,
+            phone: placeData.formatted_phone_number,
+            photoUrls: placeData.photoUrls,
+            openingHours: placeData.opening_hours?.weekday_text,
+            openNow: placeData.opening_hours?.open_now,
+            placeReviews: placeData.reviews
+          }
+        }
+      }
+
+      return day
+    })
+  }
+
+  return itinerary
+}
 
 // Increase route timeout for multi-agent processing
 export const maxDuration = 300 // 5 minutes
@@ -156,9 +259,19 @@ export async function POST(req: NextRequest) {
       throw new Error(`Master Planner failed: ${masterError.message}`)
     }
 
+    // STEP 6: Enrich itinerary with extended Google Places data
+    console.log('\n🔧 Step 6: Enriching itinerary with photos, reviews, and contact info...')
+    const enrichedItinerary = enrichItineraryWithPlaceData(
+      finalItinerary,
+      restaurants,
+      attractions,
+      accommodations
+    )
+    console.log('✅ Itinerary enriched with extended place data!')
+
     // Return the complete itinerary as JSON
     return new Response(
-      JSON.stringify(finalItinerary),
+      JSON.stringify(enrichedItinerary),
       {
         status: 200,
         headers: {

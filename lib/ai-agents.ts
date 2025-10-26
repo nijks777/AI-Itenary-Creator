@@ -313,6 +313,11 @@ Create a complete ${days}-day itinerary that:
    - 3 restaurant options (breakfast, lunch, dinner)
    - Daily budget estimate
 3. Includes travel tips, packing list, cultural tips, emergency info
+4. Includes travelEssentials with local contacts for:
+   - Tour guides (for guided tours and local expertise)
+   - Scooter/bike rentals (for easy local transportation)
+   - Car rentals (for day trips and flexibility)
+   IMPORTANT: Provide realistic estimated costs and generic but useful contact info
 
 Return ONLY valid JSON (no markdown) in this exact format:
 {
@@ -344,7 +349,31 @@ Return ONLY valid JSON (no markdown) in this exact format:
     "police": "Local emergency number",
     "ambulance": "Local emergency number",
     "embassy": "Contact if applicable"
-  }
+  },
+  "travelEssentials": [
+    {
+      "type": "Tour Guide",
+      "name": "Local tour guide service name",
+      "contact": "+XX-XXXX-XXXXXX",
+      "description": "Brief description of service",
+      "estimatedCost": "$XX per day",
+      "website": "https://example.com (if available)"
+    },
+    {
+      "type": "Scooter Rental",
+      "name": "Scooter rental shop name",
+      "contact": "+XX-XXXX-XXXXXX",
+      "description": "Brief description",
+      "estimatedCost": "$XX per day"
+    },
+    {
+      "type": "Car Rental",
+      "name": "Car rental service name",
+      "contact": "+XX-XXXX-XXXXXX",
+      "description": "Brief description",
+      "estimatedCost": "$XX per day"
+    }
+  ]
 }
 
 IMPORTANT:

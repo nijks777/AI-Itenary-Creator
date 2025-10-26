@@ -23,7 +23,26 @@ export interface PlaceResult {
   };
   opening_hours?: {
     open_now?: boolean;
+    weekday_text?: string[];
   };
+  // Extended fields from Place Details API
+  formatted_address?: string;
+  formatted_phone_number?: string;
+  international_phone_number?: string;
+  website?: string;
+  business_status?: string;
+  reviews?: Array<{
+    author_name: string;
+    rating: number;
+    text: string;
+    time: number | string;
+    relative_time_description: string;
+  }>;
+  editorial_summary?: {
+    overview?: string;
+  };
+  // Photo URLs (constructed from photo_reference)
+  photoUrls?: string[];
 }
 
 export interface RestaurantSearchParams {
@@ -106,7 +125,12 @@ export async function searchRestaurants(
       return scoreB - scoreA;
     });
 
-    return filteredResults.slice(0, params.limit || 15);
+    const topResults = filteredResults.slice(0, params.limit || 15);
+
+    // Enrich top 10 results with detailed information
+    const enrichedResults = await enrichPlacesWithDetails(topResults, 10);
+
+    return enrichedResults;
   } catch (error) {
     console.error("Error searching restaurants:", error);
     return [];
@@ -150,8 +174,12 @@ export async function searchAttractions(
       return scoreB - scoreA;
     });
 
-    // Return more results to give AI more options
-    return results.slice(0, params.limit || 30);
+    const topResults = results.slice(0, params.limit || 30);
+
+    // Enrich top 10 results with detailed information
+    const enrichedResults = await enrichPlacesWithDetails(topResults, 10);
+
+    return enrichedResults;
   } catch (error) {
     console.error("Error searching attractions:", error);
     return [];
@@ -216,7 +244,12 @@ export async function searchAccommodations(
       return scoreB - scoreA;
     });
 
-    return results.slice(0, limit);
+    const topResults = results.slice(0, limit);
+
+    // Enrich top results with detailed information
+    const enrichedResults = await enrichPlacesWithDetails(topResults, Math.min(5, topResults.length));
+
+    return enrichedResults;
   } catch (error) {
     console.error("Error searching accommodations:", error);
     return [];
@@ -237,4 +270,111 @@ export function formatPlaceForAI(place: PlaceResult): string {
     "placeId": "${place.place_id}",
     "mapsLink": "https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${place.place_id}"
   }`;
+}
+
+/**
+ * Construct photo URLs from photo references
+ */
+export function getPhotoUrls(photos: PlaceResult['photos'], maxPhotos: number = 5): string[] {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey || !photos || photos.length === 0) {
+    return [];
+  }
+
+  return photos.slice(0, maxPhotos).map(photo =>
+    `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photo.photo_reference}&key=${apiKey}`
+  );
+}
+
+/**
+ * Fetch detailed information about a place using Place Details API
+ */
+export async function fetchPlaceDetails(placeId: string): Promise<Partial<PlaceResult>> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+  if (!apiKey) {
+    console.warn("Google Places API key not found");
+    return {};
+  }
+
+  try {
+    const response = await client.placeDetails({
+      params: {
+        place_id: placeId,
+        fields: [
+          'formatted_address',
+          'formatted_phone_number',
+          'international_phone_number',
+          'website',
+          'opening_hours',
+          'reviews',
+          'editorial_summary',
+          'business_status',
+          'photos'
+        ],
+        key: apiKey,
+      },
+    });
+
+    const result = response.data.result;
+
+    return {
+      formatted_address: result.formatted_address,
+      formatted_phone_number: result.formatted_phone_number,
+      international_phone_number: result.international_phone_number,
+      website: result.website,
+      business_status: result.business_status,
+      opening_hours: result.opening_hours ? {
+        open_now: result.opening_hours.open_now,
+        weekday_text: result.opening_hours.weekday_text,
+      } : undefined,
+      reviews: result.reviews?.slice(0, 3).map(review => ({
+        author_name: review.author_name,
+        rating: review.rating,
+        text: review.text,
+        time: review.time,
+        relative_time_description: review.relative_time_description,
+      })),
+      editorial_summary: result.editorial_summary,
+      photos: result.photos,
+      photoUrls: getPhotoUrls(result.photos, 5),
+    };
+  } catch (error) {
+    console.error(`Error fetching place details for ${placeId}:`, error);
+    return {};
+  }
+}
+
+/**
+ * Enrich basic place results with detailed information
+ * Only fetches details for top N places to avoid excessive API calls
+ */
+export async function enrichPlacesWithDetails(
+  places: PlaceResult[],
+  topN: number = 10
+): Promise<PlaceResult[]> {
+  const topPlaces = places.slice(0, topN);
+  const otherPlaces = places.slice(topN);
+
+  // Fetch details for top places in parallel
+  const enrichedTopPlaces = await Promise.all(
+    topPlaces.map(async (place) => {
+      const details = await fetchPlaceDetails(place.place_id);
+      // Add photo URLs even if we don't fetch full details
+      const photoUrls = getPhotoUrls(place.photos, 5);
+      return {
+        ...place,
+        ...details,
+        photoUrls: details.photoUrls || photoUrls,
+      };
+    })
+  );
+
+  // For other places, just add photo URLs
+  const enrichedOtherPlaces = otherPlaces.map(place => ({
+    ...place,
+    photoUrls: getPhotoUrls(place.photos, 5),
+  }));
+
+  return [...enrichedTopPlaces, ...enrichedOtherPlaces];
 }
